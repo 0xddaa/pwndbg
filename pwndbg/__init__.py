@@ -46,6 +46,7 @@ import pwndbg.commands.version
 import pwndbg.commands.vmmap
 import pwndbg.commands.windbg
 import pwndbg.commands.xor
+import pwndbg.commands.pada
 import pwndbg.constants
 import pwndbg.disasm
 import pwndbg.disasm.arm
