@@ -48,3 +48,23 @@ def codebase():
     """ Get text base """
     codebs = codeaddr()[0]
     print("\033[34m" + "codebase : " + "\033[37m" + hex(codebs))
+
+@pwndbg.commands.Command
+@pwndbg.commands.OnlyWhenRunning
+def tls():
+    """ Get tls base """
+    tlsaddr = gettls()
+    if tlsaddr != -1:
+        print("\033[34m" + "tls : " + "\033[37m" + hex(tlsaddr))
+    else:
+        print("cannot get tls")
+
+@pwndbg.commands.Command
+@pwndbg.commands.OnlyWhenRunning
+def canary():
+    """ Get canary value """
+    canary = getcanary()
+    if canary != -1:
+        print("\033[34m" + "canary : " + "\033[37m" + hex(canary))
+    else:
+        print("cannot get cannary")

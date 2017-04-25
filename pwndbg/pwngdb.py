@@ -11,13 +11,20 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import re
+import struct
 
 import gdb
 
+import pwndbg.arch
 import pwndbg.proc
+import pwndbg.search
+
+capsize = 0
+word = ""
+arch = ""
 
 def procmap():
-    data = gdb.execute("info proc exe", to_string = True)
+    data = gdb.execute("info proc exe", to_string=True)
     pid = re.search("process.*", data)
     if pid :
         pid = pid.group().split()[1]
@@ -63,3 +70,32 @@ def codeaddr(): # ret (start, end)
         return (int(codebaseaddr, 16), int(codeend, 16))
     else :
         return (0, 0)
+
+def gettls():
+    arch = pwndbg.arch.current
+
+    if arch == "i386" :
+        vsysaddr = gdb.execute("info functions __kernel_vsyscall", to_string=True).split("\n")[-2].split()[0].strip()
+        value = struct.pack("<L", int(vsysaddr, 16))
+        sysinfo = [address for address in pwndbg.search.search(value)][0]
+        return sysinfo - 0x10
+    elif arch == "x86-64" :
+        gdb.execute("call arch_prctl(0x1003, $rsp-8)", to_string=True)
+        data = gdb.execute("x/xg $rsp-8", to_string=True)
+        return int(data.split(":")[1].strip(), 16)
+    else:
+        return -1
+
+def getcanary():
+    arch = pwndbg.arch.current
+    tlsaddr = gettls()
+    if arch == "i386" :
+        offset = 0x14
+        result = gdb.execute("x/x " + hex(tlsaddr + offset), to_string=True).split(":")[1].strip()
+        return int(result, 16)
+    elif arch == "x86-64" :
+        offset = 0x28
+        result = gdb.execute("x/x " + hex(tlsaddr + offset), to_string=True).split(":")[1].strip()
+        return int(result, 16)
+    else :
+        return -1
