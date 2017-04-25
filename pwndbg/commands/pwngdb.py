@@ -114,4 +114,14 @@ def got():
         return
 
     cmd = "objdump -R {} {}".format("--demangle" if iscplus() else "", processname)
-    print(subprocess.check_output(cmd, shell=True)[:-2].decode('utf8').strip())
+    print(subprocess.check_output(cmd, shell=True)[:-2].decode("utf8").strip())
+
+@pwndbg.commands.Command
+def dyn():
+    """ Print dynamic section """
+    processname = pwndbg.proc.exe
+    if not processname:
+        print("no current process or executable file specified")
+        return
+
+    print(subprocess.check_output("readelf -d {}".format(processname), shell=True).decode("utf8").strip())
