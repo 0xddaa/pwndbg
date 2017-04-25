@@ -29,6 +29,10 @@ def at(*arg):
         print('attaching to {} ...'.format(processname))
         pidlist = subprocess.check_output('pidof $(basename {})'.format(processname), shell=True).decode('utf8').split()
         gdb.execute("attach " + pidlist[0])
+        getheapbase()
+        libcbase()
+        codeaddr()
+        ldbase()
     except :
         print("no such process")
 
