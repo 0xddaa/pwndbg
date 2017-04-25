@@ -18,7 +18,9 @@ import subprocess
 import gdb
 
 import pwndbg.commands
+import pwndbg.arch
 import pwndbg.proc
+import pwndbg.search
 from pwndbg.pwngdb import *
 
 @pwndbg.commands.Command
@@ -102,3 +104,14 @@ def off(*arg) :
             print("\033[34m" + sym  + " : " + "\033[37m" + hex(symaddr))
     else :
         print("symbol not found")
+
+@pwndbg.commands.Command
+def got():
+    """ Print the got table """
+    processname = pwndbg.proc.exe
+    if not processname :
+        print("no current process or executable file specified")
+        return
+
+    cmd = "objdump -R {} {}".format("--demangle" if iscplus() else "", processname)
+    print(subprocess.check_output(cmd, shell=True)[:-2].decode('utf8').strip())

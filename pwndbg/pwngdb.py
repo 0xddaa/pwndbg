@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 
 import re
 import struct
+import subprocess
 
 import gdb
 
@@ -114,3 +115,6 @@ def getoff(sym):
                 return symaddr - libc
         except :
             return -1
+
+def iscplus():
+    return "CXX" in subprocess.check_output("readelf -s {}".format(pwndbg.proc.exe), shell=True).decode('utf8')
