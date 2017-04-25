@@ -9,7 +9,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
-import subprocess
 import socket
 import sys
 
@@ -48,17 +47,6 @@ def recv(sock, raw=False):
         return buf
     else:
         return buf if sys.version_info < (3, 0) else buf.decode()
-
-@pwndbg.commands.Command
-def auto_attach(*arg):
-    """Automatically attach process by filename."""
-    processname = arg[0] if len(arg) > 0 else pwndbg.proc.exe
-    try :
-        print('Attaching to {} ...'.format(processname))
-        pidlist = subprocess.check_output('pidof $(basename {})'.format(processname), shell=True).decode('utf8').split()
-        gdb.execute("attach " + pidlist[0])
-    except :
-        print( "No such process" )
 
 @pwndbg.commands.Command
 def get_ida_symbols():

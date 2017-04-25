@@ -18,7 +18,19 @@ import subprocess
 import gdb
 
 import pwndbg.commands
+import pwndbg.proc
 from pwndbg.pwngdb import *
+
+@pwndbg.commands.Command
+def at(*arg):
+    """Automatically attach process by filename."""
+    processname = arg[0] if len(arg) > 0 else pwndbg.proc.exe
+    try :
+        print('attaching to {} ...'.format(processname))
+        pidlist = subprocess.check_output('pidof $(basename {})'.format(processname), shell=True).decode('utf8').split()
+        gdb.execute("attach " + pidlist[0])
+    except :
+        print("no such process")
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWhenRunning
