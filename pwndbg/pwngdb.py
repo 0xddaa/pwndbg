@@ -117,4 +117,17 @@ def getoff(sym):
             return -1
 
 def iscplus():
-    return "CXX" in subprocess.check_output("readelf -s {}".format(pwndbg.proc.exe), shell=True).decode('utf8')
+    return "CXX" in subprocess.check_output("readelf -s {}".format(pwndbg.proc.exe), shell=True).decode("utf8")
+
+def searchcall(symbol):
+    procname = pwndbg.proc.exe
+    cmd = "objdump -d -M intel {} {}".format("--demangle" if iscplus() else "", procname)
+    cmd += "| grep 'call.*{}@plt'".format(symbol)
+    try :
+        return subprocess.check_output(cmd, shell=True).decode("utf8").strip("\n")
+    except :
+        return -1
+
+def ispie():
+    result = subprocess.check_output("readelf -h {}".format(pwndbg.proc.exe), shell=True).decode("utf8")
+    return True if re.search("DYN", result) else False

@@ -125,3 +125,22 @@ def dyn():
         return
 
     print(subprocess.check_output("readelf -d {}".format(processname), shell=True).decode("utf8").strip())
+
+@pwndbg.commands.Command
+def findcall(symbol):
+    """ Find some function call """
+    call = searchcall(symbol)
+    print(call) if call != -1 else print("symbol not found")
+
+@pwndbg.commands.Command
+def bcall(symbol):
+    """ Set the breakpoint at some function call """
+    call = searchcall(symbol)
+    if call == -1:
+        print("symbol not found")
+        return
+
+    codebase = codeaddr()[0] if ispie() else 0
+    for callbase in call.split('\n'):
+        addr = int(callbase.split(':')[0],16) + codebase
+        gdb.execute("b *{}".format(hex(addr)))
