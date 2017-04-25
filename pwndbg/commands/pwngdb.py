@@ -89,6 +89,22 @@ def canary():
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWhenRunning
+def fmtarg(addr):
+    """ Calculate the index of format string """
+    if pwndbg.arch.current == "i386":
+        reg = "esp"
+    elif pwndbg.arch.current == "x86-64":
+        reg = "rsp"
+    else:
+        print("arch not support")
+        return
+
+    start = int(gdb.execute("info register {}".format(reg), to_string=True).split()[1].strip(), 16)
+    idx = (int(addr, 0) - start) / (pwndbg.arch.ptrsize) + 6
+    print("The index of format argument : %d" % idx)
+
+@pwndbg.commands.Command
+@pwndbg.commands.OnlyWhenRunning
 def off(symbol) :
     """ Calculate the offset of libc """
     symaddr = getoff(symbol)
