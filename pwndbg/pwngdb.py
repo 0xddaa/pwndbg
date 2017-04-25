@@ -99,3 +99,18 @@ def getcanary():
         return int(result, 16)
     else :
         return -1
+
+def getoff(sym):
+    libc = libcbase()
+    if type(sym) is int :
+        return sym - libc
+    else :
+        try :
+            data = gdb.execute("x/x " + sym, to_string=True)
+            if "No symbol" in data:
+                return -1
+            else :
+                symaddr = int(re.search("0x.*[0-9a-f] ", data).group()[:-1], 16)
+                return symaddr - libc
+        except :
+            return -1
