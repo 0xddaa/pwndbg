@@ -55,7 +55,7 @@ def ldbase():
     data = re.search(".*ld.*\.so", procmap())
     if data :
         ldaddr = data.group().split("-")[0]
-        gdb.execute("set $ld=%s".format(hex(int(ldaddr, 16))))
+        gdb.execute("set $ld={}".format(hex(int(ldaddr, 16))))
         return int(ldaddr, 16)
     else :
         return 0
