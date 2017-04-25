@@ -89,19 +89,14 @@ def canary():
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWhenRunning
-def off(*arg) :
+def off(symbol) :
     """ Calculate the offset of libc """
-    if len(arg) < 1:
-        print("no symbol given")
-        return
-
-    sym = arg[0]
-    symaddr = getoff(sym)
+    symaddr = getoff(symbol)
     if symaddr != -1 :
         if type(sym) is int :
-            print("\033[34m" + hex(sym)  + " : " + "\033[37m" + hex(symaddr))
+            print("\033[34m" + hex(symbol)  + " : " + "\033[37m" + hex(symaddr))
         else :
-            print("\033[34m" + sym  + " : " + "\033[37m" + hex(symaddr))
+            print("\033[34m" + symbol  + " : " + "\033[37m" + hex(symaddr))
     else :
         print("symbol not found")
 
