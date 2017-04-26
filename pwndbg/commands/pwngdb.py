@@ -27,15 +27,23 @@ from pwndbg.pwngdb import *
 def at(*arg):
     """Automatically attach process by filename."""
     processname = arg[0] if len(arg) > 0 else pwndbg.proc.exe
+
     try :
-        print('attaching to {} ...'.format(processname))
-        pidlist = subprocess.check_output('pidof $(basename {})'.format(processname), shell=True).decode('utf8').split()
-        gdb.execute("attach " + pidlist[0])
-        getheapbase()
-        libcbase()
-        codeaddr()
-        ldbase()
-    except :
+        pidlist = map(int, subprocess.check_output('pidof $(basename {})'.format(processname), shell=True).decode('utf8').split())
+
+        for pid in pidlist:
+            if pid == pwndbg.proc.pid:
+                continue
+            print('attaching to {} ...'.format(processname))
+            gdb.execute("attach {}".format(pid))
+            getheapbase()
+            libcbase()
+            codeaddr()
+            ldbase()
+            return
+
+        print("already attached on {}".format(pwndbg.proc.pid))
+    except:
         print("no such process")
 
 @pwndbg.commands.Command
