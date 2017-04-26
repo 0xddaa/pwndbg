@@ -20,6 +20,12 @@ import pwndbg.arch
 import pwndbg.proc
 import pwndbg.search
 
+def to_int(val):
+    try:
+        return int(str(val), 0)
+    except:
+        return val
+
 def procmap():
     data = gdb.execute("info proc exe", to_string=True)
     pid = re.search("process.*", data)
@@ -97,13 +103,15 @@ def getcanary():
     else :
         return -1
 
-def getoff(sym):
+def getoff(symbol):
     libc = libcbase()
-    if type(sym) is int :
-        return sym - libc
+    symbol = to_int(symbol)
+
+    if isinstance(symbol, int):
+        return symbol - libc
     else :
         try :
-            data = gdb.execute("x/x " + sym, to_string=True)
+            data = gdb.execute("x/x " + symbol, to_string=True)
             if "No symbol" in data:
                 return -1
             else :

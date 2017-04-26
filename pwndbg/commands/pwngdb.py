@@ -105,16 +105,17 @@ def fmtarg(addr):
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWhenRunning
-def off(symbol) :
+def off(symbol):
     """ Calculate the offset of libc """
     symaddr = getoff(symbol)
-    if symaddr != -1 :
-        if type(sym) is int :
-            print("\033[34m" + hex(symbol)  + " : " + "\033[37m" + hex(symaddr))
-        else :
-            print("\033[34m" + symbol  + " : " + "\033[37m" + hex(symaddr))
-    else :
+    if symaddr == -1 :
         print("symbol not found")
+        return
+
+    if type(symbol) is int :
+        print("\033[34m" + hex(symbol)  + " : " + "\033[37m" + hex(symaddr))
+    else :
+        print("\033[34m" + symbol  + " : " + "\033[37m" + hex(symaddr))
 
 @pwndbg.commands.Command
 def got():
