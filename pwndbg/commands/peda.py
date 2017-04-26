@@ -14,17 +14,16 @@ import pwndbg.commands
 import pwndbg.commands.context
 import pwndbg.commands.telescope
 import pwndbg.proc
+from pwndbg.peda import *
 
+peda = PEDA()
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWhenRunning
 def getfile():
-    print(repr(pwndbg.auxv.get().AT_EXECFN))
+    peda.getfile()
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWhenRunning
 def getpid():
-    print(pwndbg.proc.pid)
-
-xinfo = pwndbg.commands.context.context
-xprint = pwndbg.commands.telescope.telescope
+    peda.getpid()
