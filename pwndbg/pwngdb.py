@@ -20,10 +20,6 @@ import pwndbg.arch
 import pwndbg.proc
 import pwndbg.search
 
-capsize = 0
-word = ""
-arch = ""
-
 def procmap():
     data = gdb.execute("info proc exe", to_string=True)
     pid = re.search("process.*", data)
