@@ -126,33 +126,27 @@ def off(symbol):
         print("\033[34m" + symbol  + " : " + "\033[37m" + hex(symaddr))
 
 @pwndbg.commands.Command
+@pwndbg.commands.OnlyWithFile
 def got():
     """ Print the got table """
-    processname = pwndbg.proc.exe
-    if not processname :
-        print("no current process or executable file specified")
-        return
-
-    cmd = "objdump -R {} {}".format("--demangle" if iscplus() else "", processname)
+    cmd = "objdump -R {} {}".format("--demangle" if iscplus() else "", pwndbg.proc.exe)
     print(subprocess.check_output(cmd, shell=True)[:-2].decode("utf8").strip())
 
 @pwndbg.commands.Command
+@pwndbg.commands.OnlyWithFile
 def dyn():
     """ Print dynamic section """
-    processname = pwndbg.proc.exe
-    if not processname:
-        print("no current process or executable file specified")
-        return
-
-    print(subprocess.check_output("readelf -d {}".format(processname), shell=True).decode("utf8").strip())
+    print(subprocess.check_output("readelf -d {}".format(pwndbg.proc.exe), shell=True).decode("utf8").strip())
 
 @pwndbg.commands.Command
+@pwndbg.commands.OnlyWithFile
 def findcall(symbol):
     """ Find some function call """
     call = searchcall(symbol)
     print(call) if call != -1 else print("symbol not found")
 
 @pwndbg.commands.Command
+@pwndbg.commands.OnlyWithFile
 def bcall(symbol):
     """ Set the breakpoint at some function call """
     call = searchcall(symbol)
@@ -162,5 +156,5 @@ def bcall(symbol):
 
     codebase = codeaddr()[0] if ispie() else 0
     for callbase in call.split('\n'):
-        addr = int(callbase.split(':')[0],16) + codebase
+        addr = int(callbase.split(':')[0], 16) + codebase
         gdb.execute("b *{}".format(hex(addr)))
