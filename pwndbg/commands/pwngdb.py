@@ -126,6 +126,25 @@ def off(symbol):
         print("\033[34m" + symbol  + " : " + "\033[37m" + hex(symaddr))
 
 @pwndbg.commands.Command
+@pwndbg.commands.OnlyWhenRunning
+def findsyscall(*arg):
+    """ ind the syscall gadget"""
+    vmmap = arg[0] if len(arg) > 0 else pwndbg.proc.exe
+    arch = pwndbg.arch.current
+    start, end = codeaddr()
+
+    if arch == "x86-64" :
+        gdb.execute("search -e -x 0f05 {}".format(vmmap))
+    elif arch == "i386":
+        gdb.execute("search -e -x cd80 {}".format(vmmap))
+    elif arch == "arm":
+        gdb.execute("search -e -x 00df80bc {}".format(vmmap))
+    elif arch == "aarch64":
+        gdb.execute("search -e -x 010000d4 {}".format(vmmap))
+    else :
+        print("arch not support")
+
+@pwndbg.commands.Command
 @pwndbg.commands.OnlyWithFile
 def got():
     """ Print the got table """
