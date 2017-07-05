@@ -61,6 +61,6 @@ def get_ida_symbols():
         f.write(buf)
 
     if os.path.exists(filename):
-        gdb.execute('symbol-file {}'.format(filename))
+        gdb.execute('file {}'.format(filename))
     else:
         print('Can\'t not receive ida symfile.')
