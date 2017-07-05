@@ -49,13 +49,14 @@ class module(ModuleType):
 
     @property
     def exe(self):
+        if self.alive:
+            auxv = pwndbg.auxv.get()
+            return auxv['AT_EXECFN']
         for obj in gdb.objfiles():
             if obj.filename:
                 return obj.filename
             break
-        if self.alive:
-            auxv = pwndbg.auxv.get()
-            return auxv['AT_EXECFN']
+
     def OnlyWhenRunning(self, func):
         @functools.wraps(func)
         def wrapper(*a, **kw):
