@@ -11,9 +11,8 @@ import codecs
 import os
 import struct
 
-import gdb
-
 import pwndbg.arch
+import pwndbg.color
 import pwndbg.color.memory as M
 import pwndbg.commands
 import pwndbg.config
@@ -22,6 +21,7 @@ import pwndbg.search
 import pwndbg.vmmap
 
 saved = set()
+
 
 def print_search_hit(address):
     """Prints out a single search hit.
@@ -43,7 +43,7 @@ def print_search_hit(address):
     region = M.get(address, region)
     addr = M.get(address)
     display = pwndbg.enhance.enhance(address)
-    print(region,addr,display)
+    print(region, addr, display)
 
 auto_save = pwndbg.config.Parameter('auto-save-search', False,
                         'automatically pass --save to "search" command')
@@ -73,7 +73,7 @@ parser.add_argument('-w', '--writable', action='store_true',
                     help='Search writable segments only')
 parser.add_argument('value', type=str,
                     help='Value to search for')
-parser.add_argument('mapping', type=str, nargs='?', default=None,
+parser.add_argument('mapping_name', type=str, nargs='?', default=None,
                     help='Mapping to search [e.g. libc]')
 parser.add_argument('--save', action='store_true', default=None,
                     help='Save results for --resume.  Default comes from config %r' % auto_save.name)
@@ -82,9 +82,10 @@ parser.add_argument('--no-save', action='store_false', default=None, dest='save'
 parser.add_argument('-n', '--next', action='store_true',
                     help='Search only locations returned by previous search with --save')
 
+
 @pwndbg.commands.ArgparsedCommand(parser)
 @pwndbg.commands.OnlyWhenRunning
-def search(type, hex, string, executable, writable, value, mapping, save, next):
+def search(type, hex, string, executable, writable, value, mapping_name, save, next):
     # Adjust pointer sizes to the local architecture
     if type == 'pointer':
         type = {
@@ -123,10 +124,20 @@ def search(type, hex, string, executable, writable, value, mapping, save, next):
             print('invalid input for type {}: {}'.format(type, e))
             return
 
-
     # Null-terminate strings
     elif type == 'string':
+        value = value.encode()
         value += b'\x00'
+
+    # Find the mappings that we're looking for
+    mappings = pwndbg.vmmap.get()
+
+    if mapping_name:
+        mappings = [m for m in mappings if mapping_name in m.objfile]
+
+    if not mappings:
+        print(pwndbg.color.red("Could not find mapping %r" % mapping_name))
+        return
 
     # Prep the saved set if necessary
     global saved
@@ -135,7 +146,7 @@ def search(type, hex, string, executable, writable, value, mapping, save, next):
 
     # Perform the search
     for address in pwndbg.search.search(value,
-                                        mapping=mapping,
+                                        mappings=mappings,
                                         executable=executable,
                                         writable=writable):
 

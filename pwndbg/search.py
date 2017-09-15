@@ -8,8 +8,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import struct
-
 import gdb
 
 import pwndbg.arch
@@ -18,18 +16,33 @@ import pwndbg.typeinfo
 import pwndbg.vmmap
 
 
-def search(searchfor, mapping=None, start=None, end=None, 
+def search(searchfor, mappings=None, start=None, end=None, 
            executable=False, writable=False):
-    value = searchfor
-    size  = None
+    """Search inferior memory for a byte sequence.
 
+    Arguments:
+        searchfor(bytes): Byte sequence to find
+        mappings(list): List of pwndbg.memory.Page objects to search
+            By default, uses all available mappings.
+        start(int): First address to search, inclusive.
+        end(int): Last address to search, exclusive.
+        executable(bool): Restrict search to executable pages
+        writable(bool): Restrict search to writable pages
+
+    Yields:
+        An iterator on the address matches
+    """
     i = gdb.selected_inferior()
 
-    maps = pwndbg.vmmap.get()
-    hits = []
-
+    maps = mappings or pwndbg.vmmap.get()
+    
     if end and start:
-        maps = [m for m in maps if start <= m < end]
+        assert start < end, 'Last address to search must be greater then first address'
+        maps = [m for m in maps if start in m or (end-1) in m]
+    elif start:
+        maps = [m for m in maps if start in m]
+    elif end:
+        maps = [m for m in maps if (end-1) in m]
 
     if executable:
         maps = [m for m in maps if m.execute]
@@ -38,11 +51,8 @@ def search(searchfor, mapping=None, start=None, end=None,
         maps = [m for m in maps if m.write]
 
     for vmmap in maps:
-        start = vmmap.vaddr
-        end   = start + vmmap.memsz
-
-        if mapping and mapping not in vmmap.objfile:
-            continue
+        start = vmmap.start
+        end   = vmmap.end
 
         while True:
             # No point in searching if we can't read the memory
