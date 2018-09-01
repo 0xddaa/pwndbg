@@ -87,16 +87,6 @@ def tls():
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWhenRunning
-def canary():
-    """ Get canary value """
-    canary = getcanary()
-    if canary != -1:
-        print("\033[34m" + "canary : " + "\033[37m" + hex(canary))
-    else:
-        print("cannot get cannary")
-
-@pwndbg.commands.Command
-@pwndbg.commands.OnlyWhenRunning
 def fmtarg(addr):
     """ Calculate the index of format string """
     if pwndbg.arch.current == "i386":
@@ -143,13 +133,6 @@ def findsyscall(*arg):
         gdb.execute("search -e -x 010000d4 {}".format(vmmap))
     else :
         print("arch not support")
-
-@pwndbg.commands.Command
-@pwndbg.commands.OnlyWithFile
-def got():
-    """ Print the got table """
-    cmd = "objdump -R {} {}".format("--demangle" if iscplus() else "", pwndbg.proc.exe)
-    print(subprocess.check_output(cmd, shell=True)[:-2].decode("utf8").strip())
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWithFile

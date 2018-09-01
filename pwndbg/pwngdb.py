@@ -89,20 +89,6 @@ def gettls():
     else:
         return -1
 
-def getcanary():
-    arch = pwndbg.arch.current
-    tlsaddr = gettls()
-    if arch == "i386" :
-        offset = 0x14
-        result = gdb.execute("x/xw " + hex(tlsaddr + offset), to_string=True).split(":")[1].strip()
-        return int(result, 16)
-    elif arch == "x86-64" :
-        offset = 0x28
-        result = gdb.execute("x/xg " + hex(tlsaddr + offset), to_string=True).split(":")[1].strip()
-        return int(result, 16)
-    else :
-        return -1
-
 def getoff(symbol):
     libc = libcbase()
     symbol = to_int(symbol)
