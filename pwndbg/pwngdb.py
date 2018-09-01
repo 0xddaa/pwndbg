@@ -36,7 +36,7 @@ def procmap():
     else :
         return "error"
 
-def libcbase():
+def getlibcbase():
     data = re.search(".*libc.*\.so", procmap())
     if data :
         libcaddr = data.group().split("-")[0]
@@ -90,7 +90,7 @@ def gettls():
         return -1
 
 def getoff(symbol):
-    libc = libcbase()
+    libc = getlibcbase()
     symbol = to_int(symbol)
 
     if isinstance(symbol, int):
