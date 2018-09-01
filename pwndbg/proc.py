@@ -70,6 +70,10 @@ class module(ModuleType):
                 return obj.filename
             break
 
+    @property
+    def mem_page(self):
+        return next(p for p in pwndbg.vmmap.get() if p.objfile == self.exe)
+
     def OnlyWhenRunning(self, func):
         @functools.wraps(func)
         def wrapper(*a, **kw):
