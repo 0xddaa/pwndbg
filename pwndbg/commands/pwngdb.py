@@ -29,7 +29,7 @@ def at(*arg):
     processname = arg[0] if len(arg) > 0 else pwndbg.proc.exe
 
     try :
-        pidlist = map(int, subprocess.check_output('pidof $(basename {})'.format(processname), shell=True).decode('utf8').split())
+        pidlist = map(int, subprocess.check_output('pidof $(realpath {})'.format(processname), shell=True).decode('utf8').split())
 
         for pid in pidlist:
             if pid == pwndbg.proc.pid:
