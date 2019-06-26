@@ -138,10 +138,32 @@ class Heap(pwndbg.heap.heap.BaseHeap):
     def has_tcache(self):
         return (self.mp and 'tcache_bins' in self.mp.type.keys() and self.mp['tcache_bins'])
 
+    def _fetch_tcache_addr(self):
+        """
+        As of Ubuntu 18.04 and glibc 2.27 the tcache_perthread_struct* tcache
+        is located 0x10 bytes after the heap page, so we just return it here.
+
+        pwndbg> p tcache
+        $1 = (tcache_perthread_struct *) 0x555555756010
+        pwndbg> vmmap 0x555555756010
+        LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+            0x555555756000     0x555555777000 rw-p    21000 0      [heap]
+        """
+        return self.get_heap_boundaries().vaddr + 0x10
 
     @property
     def thread_cache(self):
         tcache_addr = pwndbg.symbol.address('tcache')
+
+        # The symbol.address returns ptr to ptr to tcache struct, as in:
+        # pwndbg> p &tcache
+        # $1 = (tcache_perthread_struct **) 0x7ffff7fd76f0
+        # so we need to dereference it
+        if tcache_addr is not None:
+            tcache_addr = pwndbg.memory.pvoid(tcache_addr)
+
+        if tcache_addr is None:
+            tcache_addr = self._fetch_tcache_addr()
 
         if tcache_addr is not None:
             try:
@@ -150,6 +172,7 @@ class Heap(pwndbg.heap.heap.BaseHeap):
             except Exception as e:
                 print(message.error('Error fetching tcache. GDB cannot access '
                                     'thread-local variables unless you compile with -lpthread.'))
+                return None
         else:
             if not self.has_tcache():
                 print(message.warn('Your libc does not use thread cache'))
@@ -393,6 +416,7 @@ class Heap(pwndbg.heap.heap.BaseHeap):
 
 
     def fastbins(self, arena_addr=None):
+        """Returns: chain or None"""
         arena = self.get_arena(arena_addr)
 
         if arena is None:
@@ -410,10 +434,12 @@ class Heap(pwndbg.heap.heap.BaseHeap):
 
             result[size] = chain
 
+        result['type'] = 'fastbins'
         return result
 
 
     def tcachebins(self, tcache_addr=None):
+        """Returns: tuple(chain, count) or None"""
         tcache = self.get_tcache(tcache_addr)
 
         if tcache is None:
@@ -436,6 +462,7 @@ class Heap(pwndbg.heap.heap.BaseHeap):
 
             result[size] = (chain, count)
 
+        result['type'] = 'tcachebins'
         return result
 
 
@@ -449,6 +476,8 @@ class Heap(pwndbg.heap.heap.BaseHeap):
         Bin 1          - Unsorted BiN
         Bin 2 to 63    - Smallbins
         Bin 64 to 126  - Largebins
+
+        Returns: tuple(chain_from_bin_fd, chain_from_bin_bk, is_chain_corrupted) or None
         """
         index = index - 1
         arena = self.get_arena(arena_addr)
@@ -464,9 +493,24 @@ class Heap(pwndbg.heap.heap.BaseHeap):
 
         front, back = normal_bins[index * 2], normal_bins[index * 2 + 1]
         fd_offset   = self.chunk_key_offset('fd')
+        bk_offset   = self.chunk_key_offset('bk')
 
-        chain = pwndbg.chain.get(int(front), offset=fd_offset, hard_stop=current_base, limit=heap_chain_limit, include_start=False)
-        return chain
+        is_chain_corrupted = False
+
+        get_chain = lambda bin, offset: pwndbg.chain.get(int(bin), offset=offset, hard_stop=current_base, limit=heap_chain_limit, include_start=True)
+        chain_fd = get_chain(front, fd_offset)
+        chain_bk = get_chain(back, bk_offset)
+
+        # check if bin[index] points to itself (is empty)
+        if len(chain_fd) == len(chain_bk) == 2 and chain_fd[0] == chain_bk[0]:
+            chain_fd = [0]
+            chain_bk = [0]
+
+        # check if corrupted
+        elif chain_fd[:-1] != chain_bk[:-2][::-1] + [chain_bk[-2]]:
+            is_chain_corrupted = True
+
+        return (chain_fd, chain_bk, is_chain_corrupted)
 
 
     def unsortedbin(self, arena_addr=None):
@@ -478,6 +522,7 @@ class Heap(pwndbg.heap.heap.BaseHeap):
 
         result['all'] = chain
 
+        result['type'] = 'unsortedbin'
         return result
 
 
@@ -495,6 +540,7 @@ class Heap(pwndbg.heap.heap.BaseHeap):
 
             result[size] = chain
 
+        result['type'] = 'smallbins'
         return result
 
 
@@ -512,6 +558,7 @@ class Heap(pwndbg.heap.heap.BaseHeap):
 
             result[size] = chain
 
+        result['type'] = 'largebins'
         return result
 
 
