@@ -77,7 +77,7 @@ def gettls():
         sysinfo = [address for address in pwndbg.search.search(value)][0]
         return sysinfo - 0x10
     elif arch == "x86-64":
-        gdb.execute("call arch_prctl(0x1003, $rsp-8)", to_string=True)
+        gdb.execute("call (int)arch_prctl(0x1003, $rsp-8)", to_string=True)
         data = gdb.execute("x/xg $rsp-8", to_string=True)
         return int(data.split(":")[1].strip(), 16)
     else:
