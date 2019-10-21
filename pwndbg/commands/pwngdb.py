@@ -36,10 +36,10 @@ def at(*arg):
                 continue
             print('attaching to {} ...'.format(processname))
             gdb.execute("attach {}".format(pid))
-            getheapbase()
-            getlibcbase()
+            get_base('libc')
+            get_base('heap')
+            get_base('ld')
             codeaddr()
-            ldbase()
             return
 
         print("already attached on {}".format(pwndbg.proc.pid))
@@ -50,13 +50,13 @@ def at(*arg):
 @pwndbg.commands.OnlyWhenRunning
 def libcbase():
     """ Get libc base """
-    print("\033[34m" + "libc : " + "\033[37m" + hex(getlibcbase()))
+    print("\033[34m" + "libc : " + "\033[37m" + hex(get_base('libc')))
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWhenRunning
 def heapbase():
     """ Get heapbase """
-    heapbase = getheapbase()
+    heapbase = get_base('heap')
     if heapbase :
         print("\033[34m" + "heapbase : " + "\033[37m" + hex(heapbase))
     else :
@@ -66,7 +66,7 @@ def heapbase():
 @pwndbg.commands.OnlyWhenRunning
 def ld():
     """ Get ld.so base """
-    print("\033[34m" + "ld : " + "\033[37m" + hex(ldbase()))
+    print("\033[34m" + "ld : " + "\033[37m" + hex(get_base('ld')))
 
 @pwndbg.commands.Command
 @pwndbg.commands.OnlyWhenRunning

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Pwngdb by angenboy
+reimplement angelboy's Pwngdb with pwndbg library
 
 https://github.com/scwuaptx/Pwngdb
 """
@@ -19,6 +19,7 @@ import gdb
 import pwndbg.arch
 import pwndbg.proc
 import pwndbg.search
+from pwndbg.color import message
 
 def to_int(val):
     try:
@@ -30,32 +31,25 @@ def procmap():
     with open("/proc/{}/maps".format(pwndbg.proc.pid), "r") as maps:
         return maps.read()
 
-def getlibcbase():
-    data = re.search(".*libc.*\.so", procmap())
-    if not data:
+def get_base(mapname):
+    map_pattern = {
+        'libc': '.*libc.*\.so',
+        'heap': '.*heap\]',
+        'ld': '.*ld.*\.so'
+    }
+
+    if mapname not in map_pattern.keys():
+        print(message.error('get_base failed: {} unsupported'.format(mapname)))
         return 0
 
-    libcaddr = data.group().split("-")[0]
-    gdb.execute("set $libc={}".format(hex(int(libcaddr, 16))))
-    return int(libcaddr, 16)
-
-def getheapbase():
-    data = re.search(".*heap\]", procmap())
+    data = re.search(map_pattern[mapname], procmap())
     if not data:
+        print(message.error('get_base failed: {} not found'.format(mapname)))
         return 0
 
-    heapbase = data.group().split("-")[0]
-    gdb.execute("set $heap={}".format(hex(int(heapbase, 16))))
-    return int(heapbase, 16)
-
-def ldbase():
-    data = re.search(".*ld.*\.so", procmap())
-    if not data:
-        return 0
-
-    ldaddr = data.group().split("-")[0]
-    gdb.execute("set $ld={}".format(hex(int(ldaddr, 16))))
-    return int(ldaddr, 16)
+    addr = data.group().split("-")[0]
+    gdb.execute('set ${}={}'.format(mapname, hex(int(addr, 16))))
+    return int(addr, 16)
 
 def codeaddr(): # ret (start, end)
     pat = ".*" + pwndbg.proc.exe
@@ -84,7 +78,7 @@ def gettls():
         return -1
 
 def getoff(symbol):
-    libc = getlibcbase()
+    libc = get_base('libc')
     symbol = to_int(symbol)
 
     if isinstance(symbol, int):
